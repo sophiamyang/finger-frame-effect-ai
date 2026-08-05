@@ -1,323 +1,336 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finger Frame AI</title>
+  <title>手指取景框 · 实时 AI</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg: #0b0a10;
-      --card: rgba(255, 255, 255, 0.035);
-      --line: rgba(255, 255, 255, 0.09);
-      --text-dim: rgba(255, 255, 255, 0.6);
-      --text-faint: rgba(255, 255, 255, 0.42);
-      --accent-a: #ff6b5e;
-      --accent-b: #ffc24b;
-      --grad: linear-gradient(120deg, var(--accent-a), var(--accent-b));
-    }
-    html, body { min-height: 100%; }
-    body {
-      background:
-        radial-gradient(900px 500px at 12% -8%, rgba(255, 107, 94, 0.10), transparent 60%),
-        radial-gradient(800px 500px at 95% 30%, rgba(255, 194, 75, 0.07), transparent 55%),
-        var(--bg);
-      color: #f2f0ec;
+    html, body {
+      height: 100%;
+      background: #0a0a0c;
+      color: #eee;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 44px 16px 40px;
+      overflow: hidden;
     }
-
-    /* ---- header ---- */
-    header { text-align: center; margin-bottom: 34px; }
-    .mark {
-      position: relative;
-      width: 58px; height: 44px;
-      margin: 0 auto 16px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
-    .mark i {
-      position: absolute; width: 14px; height: 14px;
-      border: 2.5px solid transparent;
-      border-image: var(--grad) 1;
-    }
-    .mark i:nth-child(1) { top: 0; left: 0; border-right: none; border-bottom: none; }
-    .mark i:nth-child(2) { top: 0; right: 0; border-left: none; border-bottom: none; }
-    .mark i:nth-child(3) { bottom: 0; left: 0; border-right: none; border-top: none; }
-    .mark i:nth-child(4) { bottom: 0; right: 0; border-left: none; border-top: none; }
-    h1 {
-      font-size: 30px;
-      letter-spacing: -0.5px;
-      background: linear-gradient(120deg, #fff 30%, var(--accent-b));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-    .sub {
-      font-size: 14.5px;
-      color: var(--text-dim);
-      max-width: 480px;
-      line-height: 1.55;
-      margin: 0 auto;
-    }
-    .sub b { color: #fff; font-weight: 600; }
-
-    /* ---- cards & steps ---- */
-    .card {
-      width: min(720px, 100%);
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 20px 22px;
-      margin-bottom: 16px;
-      backdrop-filter: blur(8px);
-    }
-    .step {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 14.5px; font-weight: 650;
-      margin-bottom: 10px;
-    }
-    .step .n {
-      width: 22px; height: 22px; flex: none;
-      border-radius: 50%;
-      background: var(--grad);
-      color: #1a120b;
-      font-size: 12px; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .step .opt { color: var(--text-faint); font-weight: 400; font-size: 12.5px; }
-    .card p { font-size: 12.5px; color: var(--text-dim); line-height: 1.55; margin-bottom: 12px; }
-    .card a { color: var(--accent-b); text-decoration: none; }
-    .card a:hover { text-decoration: underline; }
-
-    input[type="password"], select, textarea {
-      width: 100%;
-      padding: 9px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: rgba(0, 0, 0, 0.35);
-      color: #f2f0ec;
-      font-size: 13px;
-      margin-bottom: 10px;
-      font-family: ui-monospace, monospace;
-      resize: vertical;
-      transition: border-color 0.15s;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: rgba(255, 194, 75, 0.55);
-    }
-    select, textarea { font-family: inherit; }
-    select option { background: #17151d; }
-    .remember {
-      display: flex; align-items: center; gap: 7px;
-      font-size: 12.5px; color: var(--text-dim);
-      cursor: pointer; margin-bottom: 2px;
-    }
-    .remember input { accent-color: var(--accent-a); }
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
-    .field-label {
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--text-faint);
-      margin-bottom: 6px;
-    }
-
-    /* ---- drop zone ---- */
-    #drop {
-      position: relative;
-      width: min(720px, 100%);
-      border: 1.5px dashed rgba(255, 255, 255, 0.22);
-      border-radius: 18px;
-      padding: 44px 24px;
-      text-align: center;
-      cursor: pointer;
-      margin-bottom: 16px;
-      transition: border-color 0.15s, background 0.15s, padding 0.25s;
-    }
-    #drop:hover, #drop.over {
-      border-color: rgba(255, 194, 75, 0.6);
-      background: rgba(255, 194, 75, 0.045);
-    }
-    #drop.compact { padding: 18px 24px; }
-    #drop.compact .film, #drop.compact .small { display: none; }
-    #drop input { display: none; }
-    #drop .corner {
-      position: absolute; width: 18px; height: 18px;
-      border: 2.5px solid transparent;
-      border-image: var(--grad) 1;
-      transition: all 0.2s;
-    }
-    #drop .corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-    #drop .corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-    #drop .corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-    #drop .corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
-    #drop:hover .corner { width: 24px; height: 24px; }
-    #drop .film { font-size: 26px; margin-bottom: 10px; }
-    #drop .big { font-size: 15px; font-weight: 650; margin-bottom: 6px; }
-    #drop .small { font-size: 12.5px; color: var(--text-faint); }
-
-    /* ---- stage ---- */
     #stage {
-      width: min(960px, 100%);
-      display: none;
-      flex-direction: column;
+      position: fixed;
+      inset: 0;
+      display: flex;
       align-items: center;
-      gap: 14px;
+      justify-content: center;
     }
-    .canvas-wrap {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 10px;
-      box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.8);
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 12px;
     }
-    canvas { display: block; width: 100%; border-radius: 10px; background: #000; }
     video { display: none; }
 
-    #controls { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
-    button {
-      appearance: none;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.05);
-      color: #f2f0ec;
-      font-size: 13.5px;
-      font-weight: 650;
-      padding: 10px 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-    }
-    button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); transform: translateY(-1px); }
-    button:active:not(:disabled) { transform: translateY(0); }
-    button:disabled { opacity: 0.35; cursor: default; }
-    button.primary {
-      background: var(--grad);
-      border: none;
-      color: #1a120b;
-      box-shadow: 0 6px 24px -8px rgba(255, 140, 80, 0.55);
-    }
-    button.primary:hover:not(:disabled) {
-      box-shadow: 0 10px 30px -8px rgba(255, 140, 80, 0.75);
-      background: var(--grad);
-    }
-
-    /* ---- status ---- */
     #status {
-      display: none;
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
       align-items: center;
-      gap: 9px;
-      font-size: 13px;
-      color: var(--text-dim);
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 8px 16px;
-      max-width: min(720px, 100%);
-      text-align: left;
+      justify-content: center;
+      background: #0a0a0c;
+      z-index: 10;
+      transition: opacity 0.4s;
+      text-align: center;
+      padding: 24px;
     }
-    #status:not(:empty) { display: inline-flex; }
-    #status.working::before {
-      content: "";
-      flex: none;
-      width: 13px; height: 13px;
+    #status.hidden { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #333;
+      border-top-color: #eee;
       border-radius: 50%;
-      border: 2px solid rgba(255, 194, 75, 0.25);
-      border-top-color: var(--accent-b);
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    footer {
-      margin-top: 34px;
-      font-size: 12px;
-      color: var(--text-faint);
-      text-align: center;
-      line-height: 1.8;
+    #hint {
+      position: fixed;
+      left: 0; right: 0;
+      bottom: 126px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      z-index: 5;
+      animation: hint-float 3.2s ease-in-out infinite;
     }
-    footer a { color: var(--text-dim); }
-    .hidden { display: none !important; }
+    #hint.hidden { opacity: 0; }
+    #hint-text {
+      font-size: 15px;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+      animation: hint-pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes hint-pulse {
+      0%, 100% { opacity: 0.65; }
+      50% { opacity: 1; }
+    }
+    @keyframes hint-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    #live-pill {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 7;
+      display: none;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(20,20,24,0.72);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(12px);
+    }
+    #live-pill.on { display: inline-flex; }
+    #live-pill .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #4ade80;
+      animation: hint-pulse 1.6s ease-in-out infinite;
+    }
+    #live-pill.connecting .dot { background: #ffc24b; }
+    #live-pill.error .dot { background: #ff6b5e; animation: none; }
+
+    #key-btn, #lang-btn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 7;
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(20,20,24,0.72);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      font-size: 18px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #lang-btn {
+      right: 68px;
+      min-width: 44px;
+      color: #eee;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 9px;
+    }
+    #key-btn:hover, #lang-btn:hover { background: rgba(255,255,255,0.1); }
+
+    #key-panel {
+      position: fixed;
+      top: 64px;
+      right: 16px;
+      width: 330px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+      z-index: 8;
+      background: rgba(24,24,30,0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 18px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    #key-panel.hidden {
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+    }
+    #key-panel h3 { font-size: 15px; margin-bottom: 8px; }
+    #key-panel p { font-size: 12.5px; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 10px; }
+    #key-panel a { color: #8ab4ff; }
+    #key-panel input[type="password"], #key-panel textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.35);
+      color: #eee;
+      font-size: 13px;
+      margin-bottom: 10px;
+      font-family: ui-monospace, monospace;
+      resize: vertical;
+    }
+    #key-panel textarea { font-family: inherit; }
+    #key-panel .remember {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    #key-panel .row { display: flex; gap: 8px; margin-bottom: 10px; }
+    #key-panel .row button {
+      flex: 1;
+      appearance: none;
+      border: none;
+      border-radius: 9px;
+      padding: 8px 0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #key-save { background: #fff; color: #111; }
+    #key-clear { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+    #key-panel .note { font-size: 11.5px; color: rgba(255,255,255,0.45); margin-bottom: 0; }
+    #character-file { display: none; }
+
+    #toolbar {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: calc(100vw - 24px);
+      gap: 8px;
+      padding: 8px;
+      background: rgba(20,20,24,0.72);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      z-index: 6;
+    }
+    #toolbar button {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+    }
+    #toolbar button:hover { background: rgba(255,255,255,0.08); }
+    #toolbar button.active {
+      background: #fff;
+      color: #111;
+    }
+    #toolbar button .key {
+      opacity: 0.5;
+      font-weight: 400;
+      margin-right: 5px;
+      font-size: 11px;
+    }
+    #character-thumb-toolbar {
+      display: none;
+      width: 24px; height: 24px;
+      margin-left: 7px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,.55);
+    }
+    #character-thumb-toolbar.visible { display: inline-block; }
+    #display-mode {
+      position: fixed;
+      left: 50%; bottom: 78px;
+      transform: translateX(-50%);
+      z-index: 6;
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px;
+      background: rgba(20,20,24,.72);
+      backdrop-filter: blur(12px);
+      color: rgba(255,255,255,.82);
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+    #inside-replacement { position: absolute; opacity: 0; pointer-events: none; }
+    .switch-track {
+      width: 36px; height: 20px; padding: 2px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.2);
+      transition: background .18s;
+      cursor: pointer;
+    }
+    .switch-knob {
+      display: block; width: 16px; height: 16px;
+      border-radius: 50%; background: #fff;
+      transition: transform .18s;
+    }
+    #inside-replacement:checked + .switch-track { background: #4ade80; }
+    #inside-replacement:checked + .switch-track .switch-knob { transform: translateX(16px); }
   </style>
 </head>
 <body>
-  <header>
-    <div class="mark"><i></i><i></i><i></i><i></i>✨</div>
-    <h1>Finger Frame AI</h1>
-    <div class="sub">
-      Upload a clip of the <b>finger-frame gesture</b> — get it back with an
-      AI-animated version of you living inside the frame, tracked to your
-      fingers.
-    </div>
-  </header>
-
-  <div class="card" id="panel">
-    <div class="step"><span class="n">1</span> Key &amp; style
-      <span class="opt">— key needed only for the AI restyle</span></div>
-    <p>
-      Restyling runs on <strong>Gemini Omni Flash</strong>
-      (<a href="https://ai.google.dev/gemini-api/docs/omni" target="_blank" rel="noopener">video-to-video editing</a>)
-      with your own key from
-      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
-      It stays in your browser and is sent only to Google's API. No key? Try
-      everything with the placeholder style first.
-    </p>
-    <div class="row2">
-      <div>
-        <div class="field-label">Gemini API key</div>
-        <input id="gem-key" type="password" placeholder="AIza…" autocomplete="off" />
-        <label class="remember"><input type="checkbox" id="gem-remember" /> Remember on this device</label>
-      </div>
-      <div>
-        <div class="field-label">Style</div>
-        <select id="style-select">
-          <option value="movie3d">3D animated movie</option>
-          <option value="anime">Anime</option>
-          <option value="clay">Claymation</option>
-          <option value="watercolor">Watercolor</option>
-          <option value="custom">Custom prompt…</option>
-        </select>
-        <textarea id="style-custom" rows="2" class="hidden"
-          placeholder="e.g. 'Turn the scene into a LEGO world'"></textarea>
-      </div>
-    </div>
+  <div id="status">
+    <div class="spinner"></div>
+    <div id="status-text">正在加载手部追踪…</div>
   </div>
-
-  <label id="drop">
-    <span class="corner tl"></span><span class="corner tr"></span>
-    <span class="corner bl"></span><span class="corner br"></span>
-    <input id="file" type="file" accept="video/*" />
-    <div class="film">🎬</div>
-    <div class="big"><span style="opacity:.55">2 ·</span> Drop a video here, or click to choose</div>
-    <div class="small">A few seconds of 720p footage with the two-hand gesture works best (&lt;15MB).</div>
-  </label>
 
   <div id="stage">
-    <video id="orig" playsinline muted></video>
-    <video id="sty" playsinline muted crossorigin="anonymous"></video>
-    <div class="canvas-wrap"><canvas id="canvas"></canvas></div>
-    <div id="controls">
-      <button id="btn-generate" class="primary">✨ Generate AI video</button>
-      <button id="btn-placeholder">Try placeholder style</button>
-      <button id="btn-play" disabled>▶ Preview</button>
-      <button id="btn-export" disabled>⬇ Export</button>
-    </div>
-    <div id="status"></div>
+    <video id="video" autoplay playsinline muted></video>
+    <video id="lucy" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
   </div>
 
-  <footer>
-    Gemini Omni Flash · MediaPipe hand tracking · runs entirely in your browser<br />
-    <a href="https://sophiamyang.github.io/finger-frame-effect/" target="_blank" rel="noopener">live-camera sibling app</a>
-    ·
-    <a href="https://github.com/sophiamyang/finger-frame-effect-ai" target="_blank" rel="noopener">source on GitHub</a>
-  </footer>
+  <div id="hint">
+    <div id="hint-text">双手抬起，伸出拇指和食指，框出你的画面 🎬</div>
+  </div>
 
-  <script type="module" src="app.js"></script>
+  <div id="live-pill"><span class="dot"></span><span id="live-text">实时</span></div>
+
+  <div id="toolbar"></div>
+  <input id="character-file" type="file" accept="image/jpeg,image/png,image/webp" />
+
+  <label id="display-mode">
+    <span id="display-mode-label">框内显示替换画面</span>
+    <input id="inside-replacement" type="checkbox" checked />
+    <span class="switch-track"><span class="switch-knob"></span></span>
+  </label>
+
+  <button id="lang-btn" title="Switch to English">EN</button>
+  <button id="key-btn" title="Decart API 密钥">🔑</button>
+  <div id="key-panel" class="hidden">
+    <h3 id="key-heading">Decart API 密钥</h3>
+    <p id="key-description">
+      取景框中会显示由
+      <a href="https://docs.platform.decart.ai/models/realtime/lucy-2.5" target="_blank" rel="noopener">Decart Lucy 2.5</a> 实时生成的 <strong>AI 画面</strong>
+      （通过 WebRTC 以 30fps 实时转换视频）。请前往
+      <a href="https://platform.decart.ai/" target="_blank" rel="noopener">platform.decart.ai</a>。
+    </p>
+    <input id="key-input" type="password" placeholder="输入 Decart API 密钥" autocomplete="off" />
+    <label class="remember">
+      <input type="checkbox" id="key-remember" /> <span id="remember-label">在此设备上记住密钥</span>
+    </label>
+    <h3 id="custom-heading">自定义风格</h3>
+    <textarea id="style-custom" rows="3"
+      placeholder="用于“自定义”效果。请描述希望人物或画面变成的样子。"></textarea>
+    <div class="row">
+      <button id="key-save">保存并连接</button>
+      <button id="key-clear">清除</button>
+    </div>
+    <p class="note" id="key-note">
+      密钥仅保存在当前浏览器中，并只用于连接 Decart 的 WebRTC 会话。没有密钥时，将使用本地颜色滤镜作为预览。
+    </p>
+  </div>
+
+  <script type="module" src="main.js"></script>
 </body>
 </html>
