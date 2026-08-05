@@ -63,6 +63,8 @@ let presence = 0;
 let frameActive = false;
 let lostFrames = 0;
 let jumpFrames = 0;
+let sampledFrames = 0; // video frames this pass advanced through
+let trackedFrames = 0; // of those, frames the finger frame was visible on
 let recorder = null;
 let exporting = false;
 
@@ -493,10 +495,18 @@ function loop() {
 
   ctx.drawImage(orig, 0, 0, canvas.width, canvas.height);
 
-  if (landmarker && orig.currentTime !== lastVideoTime) {
+  if (orig.currentTime !== lastVideoTime) {
     lastVideoTime = orig.currentTime;
-    const res = landmarker.detectForVideo(orig, performance.now());
-    updateTracker(res.landmarks || []);
+    // Frames that play before the tracker has loaded still count, as untracked.
+    // Skipping them would measure a suffix of the clip and call it the whole.
+    if (landmarker) {
+      const res = landmarker.detectForVideo(orig, performance.now());
+      updateTracker(res.landmarks || []);
+    }
+    sampledFrames++;
+    // Same condition the renderer uses below, so this counts frames the window
+    // was actually visible on, not frames a quad merely existed on.
+    if (corners && presence > 0.01) trackedFrames++;
   }
 
   // Keep the stylized video in step with the original.
@@ -516,6 +526,8 @@ async function playThrough() {
   frameActive = false;
   lostFrames = 0;
   jumpFrames = 0;
+  sampledFrames = 0;
+  trackedFrames = 0;
   orig.currentTime = 0;
   if (haveAI) {
     sty.currentTime = 0;
@@ -525,8 +537,36 @@ async function playThrough() {
   requestAnimationFrame(loop);
 }
 
+// How much of the clip the finger frame was found on. composite.py already
+// reports this on the CLI; without it, a clip where the gesture was never
+// recognised finishes with the exact same message as a perfect run.
+function trackingSummary() {
+  if (!sampledFrames) return "";
+  if (!landmarker) {
+    return " ⚠️ The hand tracker never loaded, so nothing could be tracked.";
+  }
+  if (!trackedFrames) {
+    return (
+      " ⚠️ The finger-frame gesture was never detected. Hold both hands up with" +
+      " thumb and index spread into an L, so the four fingertips outline a" +
+      " rectangle."
+    );
+  }
+  const pct = Math.round((trackedFrames / sampledFrames) * 100);
+  return pct < 25
+    ? ` ⚠️ Finger frame found on only ${pct}% of the clip.`
+    : ` Finger frame tracked on ${pct}% of the clip.`;
+}
+
 btnPlay.addEventListener("click", () => {
   if (exporting) return;
+  orig.onended = () => {
+    orig.onended = null;
+    // Only claim the status pill if nothing else took it over mid-preview,
+    // so a generation started during the preview keeps reporting progress.
+    if (statusEl.textContent !== "Previewing…") return;
+    status("Preview finished." + trackingSummary());
+  };
   playThrough();
   status("Previewing…");
 });
@@ -564,6 +604,7 @@ btnExport.addEventListener("click", async () => {
     a.click();
     status(
       `Exported finger-frame-ai.${ext}.` +
+      trackingSummary() +
       (isMp4
         ? ""
         : " (This browser records WebM — convert with: ffmpeg -i finger-frame-ai.webm -c:v libx264 out.mp4)")
