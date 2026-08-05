@@ -140,13 +140,28 @@
       margin-bottom: 16px;
       transition: border-color 0.15s, background 0.15s, padding 0.25s;
     }
-    #drop:hover, #drop.over {
+    #drop:hover, #drop.over, #drop:has(input:focus-visible) {
       border-color: rgba(255, 194, 75, 0.6);
       background: rgba(255, 194, 75, 0.045);
     }
+    /* Keyed off :focus-visible, not :focus-within: a mouse click leaves the
+       hidden input focused, which would otherwise strand the ring on screen. */
+    #drop:has(input:focus-visible) {
+      outline: 2px solid var(--accent-b);
+      outline-offset: 3px;
+    }
     #drop.compact { padding: 18px 24px; }
     #drop.compact .film, #drop.compact .small { display: none; }
-    #drop input { display: none; }
+    /* Hidden but still focusable: display:none would drop the only upload
+       control out of the tab order, leaving no keyboard route to the picker. */
+    #drop input {
+      position: absolute;
+      width: 1px; height: 1px;
+      margin: -1px; padding: 0; border: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
     #drop .corner {
       position: absolute; width: 18px; height: 18px;
       border: 2.5px solid transparent;
