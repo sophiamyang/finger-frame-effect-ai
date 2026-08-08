@@ -1,88 +1,54 @@
-# Finger Frame AI 🎬✨
+# Finger Frame Live AI / 手指取景框实时 AI
 
-**Try it: https://sophiamyang.github.io/finger-frame-effect-ai/**
+A browser-based live camera experience that turns the area framed by your fingers into a realtime AI scene. It combines MediaPipe hand tracking, Decart Lucy 2.5 over WebRTC, and Canvas compositing. The interface can switch between English and Chinese.
 
-Upload a video of the two-hand finger-frame gesture — get it back with an
-**AI-generated world inside the frame**. The whole video is restyled by a
-video-to-video model (motion, blinks, and all), then composited so the
-finger frame acts as a window into the animated version.
+这是一个浏览器实时摄像头体验：用双手的拇指和食指框出画面，框内或框外会显示实时 AI 转换结果。项目结合了 MediaPipe 手势追踪、Decart Lucy 2.5 WebRTC 实时视频流和 Canvas 合成，并支持中英文界面切换。
 
-## The finger-frame family
+## Features / 功能
 
-| App | Generation | Latency |
-|---|---|---|
-| [finger-frame-effect](https://sophiamyang.github.io/finger-frame-effect/) ([repo](https://github.com/sophiamyang/finger-frame-effect)) — live camera, local effects | Canvas 2D (Van Gogh, toon, glitch, …) | none |
-| **this app** — recorded video, AI restyle | Gemini Omni Flash (offline video edit) | minutes |
-| [finger-frame-effect-lucy](https://sophiamyang.github.io/finger-frame-effect-lucy/) ([repo](https://github.com/sophiamyang/finger-frame-effect-lucy)) — live camera, live AI | Decart Lucy 2.5 (realtime video-to-video) | ~real time |
+- **Live finger frame** — tracks two hands and composites the generated stream inside or outside the moving frame.
+- **Realtime styles** — switch among 3D animation, anime, cyberpunk, watercolor, LEGO, and a custom prompt.
+- **Character replacement** — select item 7, upload a reference image, and update the current Lucy 2.5 session without leaving the camera view. The selected character thumbnail appears in the toolbar.
+- **Inside/outside switch** — choose whether the replacement appears inside the finger frame (default) or outside it.
+- **Gesture controls** — an OK gesture or three raised fingers toggles the inside/outside mode.
+- **Palm split view** — hold one open palm upright to show the original feed on its left and the replacement on its right. The divider follows the palm and disappears when the hand is lowered.
+- **Bilingual UI** — use the language button beside 🔑 to switch the complete interface between English and Chinese.
 
-![Example: AI-animated world inside the finger frame](examples/final.gif)
+- **实时手指取景框**：追踪双手，用移动的手指框合成原始画面和替换画面。
+- **实时风格**：支持 3D 动画、动漫、赛博朋克、水彩、LEGO 和自定义提示词。
+- **角色替换**：点击第 7 项后选择参考图，通过当前 Lucy 2.5 会话实时替换角色，缩略图会显示在工具栏中。
+- **框内/框外切换**：决定替换画面显示在手指框内（默认）还是框外。
+- **手势控制**：OK 手势或三指手势可切换框内/框外模式。
+- **手掌分屏**：单手竖直张开时，手掌左侧显示原始画面，右侧显示替换画面，分割线跟随手掌移动。
+- **中英文界面**：点击右上角 🔑 左侧的语言按钮即可切换。
 
-*Real hands, AI world — generated with the default "3D animated movie"
-style ([full-quality mp4](examples/final.mp4)).*
-
-## How it works
-
-1. **Restyle** — the uploaded video is sent to
-   [Gemini Omni Flash video editing](https://ai.google.dev/gemini-api/docs/omni)
-   with your chosen style (3D animated movie, anime, claymation,
-   watercolor, or a custom prompt). This is a true video model: the whole
-   clip is regenerated, so the animated version moves exactly like you.
-   Every prompt gets a strict-alignment suffix appended — same framing, no
-   zoom/crop/recentering, facial features at the same screen coordinates,
-   expression preserved frame by frame (mouth openness, blinks, gaze) — so
-   the result lines up behind the finger-frame window.
-2. **Track** — MediaPipe Hand Landmarker finds both hands per frame, and the
-   finger-frame quad is tracked with the same audited pipeline as the live
-   app (anatomical corner ordering — crossing your fingers renders the
-   bowtie — spread/area gates with hysteresis, teleport rejection,
-   velocity-adaptive smoothing, dropout hold, presence fade).
-3. **Composite** — the AI video is revealed through the tracked quad with
-   the dashed marching-ants outline and pulsing corner dots.
-4. **Export** — the result records to a downloadable video — MP4 where the
-   browser supports recording it (Safari, newer Chrome), otherwise `.webm`
-   (convert with `ffmpeg -i finger-frame-ai.webm -c:v libx264 out.mp4`).
-
-## Bring your own key
-
-The AI step uses your own [Gemini API key](https://aistudio.google.com/apikey),
-entered in the app. It stays in your browser (localStorage only if you check
-"remember") and is sent only to Google's API. Generation is billed per
-video and takes a few minutes. Keep clips under ~15MB (a few seconds of
-720p — any common format: mp4, mov, webm); larger files exceed the inline
-upload limit. No key? The **placeholder style** button runs the full
-track-composite-export pipeline with a hue-shifted stand-in so you can try
-everything for free.
-
-## Run locally
-
-Any static server works:
+## Run locally / 本地运行
 
 ```bash
-python3 -m http.server 8124
+python3 -m http.server 8125
 ```
 
-Then open http://localhost:8124. A `?src=<file>` query param loads a video
-from the server directory (dev convenience).
+Open <http://localhost:8125>, allow camera access, and add a Decart API key from the 🔑 panel. `getUserMedia` requires localhost or HTTPS.
 
-## CLI alternative (Python)
+打开 <http://localhost:8125>，允许浏览器访问摄像头，然后在右上角 🔑 面板填写 Decart API 密钥。浏览器摄像头需要运行在 localhost 或 HTTPS 环境中。
 
-The same pipeline as offline scripts — useful for batch work or
-frame-accurate H.264 output:
+For a camera-free tracking preview, open <http://localhost:8125/?demo>.
 
-```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+如需在没有摄像头的环境中检查界面与框选效果，可打开 <http://localhost:8125/?demo>。
 
-export GEMINI_API_KEY=...
-.venv/bin/python stylize.py input.mp4 -o stylized.mp4      # AI restyle
-.venv/bin/python composite.py input.mp4 stylized.mp4 -o final.mp4
-```
+## Controls / 操作
 
-Any input format ffmpeg/OpenCV can read works (mp4, mov, webm, …).
-`composite.py` needs `ffmpeg` on PATH, outputs H.264 MP4, and carries over
-the original audio track when present.
+| Action / 操作 | Result / 效果 |
+|---|---|
+| Two L-shaped hands / 双手组成 L 形 | Create the tracked finger frame / 组成动态取景框 |
+| OK 👌 or three fingers / OK 或三指 | Toggle replacement inside/outside / 切换框内或框外显示 |
+| One upright open palm / 一只手掌竖直张开 | Enter palm-following split view / 进入跟随手掌的左右分屏 |
+| Keys 1–7 / 数字键 1–7 | Select a style or character replacement / 选择风格或角色替换 |
 
-## Notes
+## Privacy / 隐私
 
-- Input/output media are gitignored — personal footage stays local. The
-  only committed media is the sample under `examples/`.
+The Decart API key stays in browser storage and is used only for the realtime WebRTC session. Without a key, the app uses a local color-filter fallback so hand tracking and compositing can still be tested.
+
+Decart API 密钥仅保存在浏览器中，并只用于实时 WebRTC 会话。未填写密钥时，页面会使用本地颜色滤镜作为替代，以便继续测试手势追踪和画面合成。
+
+Based on the open-source [finger-frame-effect-ai](https://github.com/sophiamyang/finger-frame-effect-ai) project and its finger-frame family.
